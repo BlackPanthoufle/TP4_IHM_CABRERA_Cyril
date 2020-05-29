@@ -16,6 +16,7 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.transform.Scale;
+import javafx.stage.WindowEvent;
 
 import java.util.ArrayList;
 
@@ -52,11 +53,9 @@ public class Controller
     private Line lineDrawn;
     private Rectangle rectangleDrawn;
     private Ellipse ellipseDrawn;
-    private Shape shape = new Shape() {};
+    private Shape selection;
     //position initiale des cliques
     private double x, y;
-    //liste contenant toutes les formes
-    private ArrayList<Shape> shapesList;
 
     @FXML
     public void initialize()
@@ -89,12 +88,13 @@ public class Controller
             @Override
             public void handle(Event event) {
                 color = colorpicker.getValue();
+                selection.setFill(color);
             }
         };
         deleteListener = new EventHandler() {
             @Override
             public void handle(Event event) {
-                System.out.println("delete");
+                canvas.getChildren().remove(selection);
             }
         };
         cloneListener = new EventHandler() {
@@ -113,6 +113,8 @@ public class Controller
         this.clone.setOnAction(cloneListener);
 
 
+
+        //Ecouteur pour la création des formes
         canvas.setOnMousePressed(mouseEvent -> {
             x = mouseEvent.getX();
             y = mouseEvent.getY();
@@ -128,30 +130,27 @@ public class Controller
                     break;
             }
         });
-
+        //Ecouteur pour agrandir la forme créée
         canvas.setOnMouseDragged(e -> {
             switch (currentShape) {
                 case "ellipse":
                     ellipseDrawn.setRadiusX(Math.abs(e.getX()-x));
                     ellipseDrawn.setRadiusY(Math.abs(e.getY()-y));
-                    shape = ellipseDrawn;
                     break;
                 case "rectangle":
                     rectangleDrawn.setHeight(Math.abs(e.getX()-x));
                     rectangleDrawn.setWidth(Math.abs(e.getY()-y));
-                    shape = rectangleDrawn;
                     break;
                 case "line":
                     lineDrawn.setEndX(e.getX());
                     lineDrawn.setEndY(e.getY());
-                    shape = lineDrawn;
                     break;
             }
         });
     }
 
-    //permet de créer un rectangle à la position du clique dans canvas
-    //ajoute un écouteur pour pouvoir le sélectionner
+    //Permet de créer un rectangle à la position du clique dans canvas
+    //Ajoute un écouteur pour pouvoir le sélectionner
     public void createRectangle(MouseEvent event, Color color)
     {
         rectangleDrawn = new Rectangle(event.getX(), event.getY(), 0,0);
@@ -163,24 +162,24 @@ public class Controller
 
     //Permet de mettre en surbrillance (agrandissement) un rectangle lorsqu'on clique dessus
     //Problème : on peut sélectionner plusieurs formes en même temps
-    public void selectRect(Rectangle rect){
+    public void selectRect(Rectangle rect)
+    {
         double scale;
 
-        if(rect.getScaleX() == 1) scale = 1.3;
+        if(rect.getScaleX() == 1)
+        {
+            scale = 1.3;
+            selection = rect;
+        }
         else scale = 1;
 
         rect.setOnMouseClicked(mouseEvent -> {
             if(currentShape == "select")
             {
-                //Permet de sélectionner seulement une forme à la fois
-                //Il y a un bug quand resélectionne une forme qui a été désélectionnée de cette façon
-                for(Node s : canvas.getChildren())
+                //Si la forme est sélectionnée
+                if(scale == 1.3)
                 {
-                    if(s.getScaleX() == 1.3 && scale == 1.3)
-                    {
-                        s.setScaleX(1);
-                        s.setScaleY(1);
-                    }
+                    uniqueSelection();
                 }
                 rect.setScaleX(scale);
                 rect.setScaleY(scale);
@@ -202,23 +201,23 @@ public class Controller
 
     //Permet de mettre en surbrillance (agrandissement) une ellipse lorsqu'on clique dessus
     //Problème : on peut sélectionner plusieurs formes en même temps
-    public void selectElli(Ellipse elli){
+    public void selectElli(Ellipse elli)
+    {
         double scale;
-        if(elli.getScaleX() == 1) scale = 1.3;
+        if(elli.getScaleX() == 1)
+        {
+            scale = 1.3;
+            selection = elli;
+        }
         else scale = 1;
 
         elli.setOnMouseClicked(mouseEvent -> {
             if(currentShape == "select")
             {
-                //Permet de sélectionner seulement une forme à la fois
-                //Il y a un bug quand resélectionne une forme qui a été désélectionnée de cette façon
-                for(Node s : canvas.getChildren())
+                //Si la forme est sélectionnée
+                if(scale == 1.3)
                 {
-                    if(s.getScaleX() == 1.3 && scale == 1.3)
-                    {
-                        s.setScaleX(1);
-                        s.setScaleY(1);
-                    }
+                    uniqueSelection();
                 }
                 elli.setScaleX(scale);
                 elli.setScaleY(scale);
@@ -233,5 +232,19 @@ public class Controller
         lineDrawn = new Line(event.getX(), event.getY(), event.getX(), event.getY());
         lineDrawn.setStroke(color);
         canvas.getChildren().add(lineDrawn);
+    }
+
+    //Désélectionne une autre forme qui serait sélectionnée
+    //Il y a un bug quand resélectionne une forme qui a été désélectionnée de cette façon
+    public void uniqueSelection()
+    {
+        for(Node s : canvas.getChildren())
+        {
+            if(s.getScaleX() == 1.3)
+            {
+                s.setScaleX(1);
+                s.setScaleY(1);
+            }
+        }
     }
 }

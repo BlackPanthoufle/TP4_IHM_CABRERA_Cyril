@@ -1,6 +1,5 @@
 package sample;
 
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -15,10 +14,6 @@ import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
-import javafx.scene.transform.Scale;
-import javafx.stage.WindowEvent;
-
-import java.util.ArrayList;
 
 public class Controller
 {
@@ -39,6 +34,7 @@ public class Controller
     private Button clone;
     @FXML
     private Pane canvas;
+
     //Listeners
     private EventHandler selectListener;
     private EventHandler ellipseListener;
@@ -53,14 +49,15 @@ public class Controller
     private Line lineDrawn;
     private Rectangle rectangleDrawn;
     private Ellipse ellipseDrawn;
-    //Forme sélectionnée et clone
-    private Shape selection, cloneSelection;
+    //Forme sélectionnée
+    private Shape selection;
     //Position initiale des cliques
     private double x, y;
 
     @FXML
     public void initialize()
     {
+        //Création de fonctions écouteurs
         selectListener = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
@@ -100,11 +97,7 @@ public class Controller
         };
         cloneListener = new EventHandler() {
             @Override
-            public void handle(Event event) {
-                cloneSelection = selection;
-                cloneSelection.setTranslateX(25);
-                cloneSelection.setTranslateY(25);
-            }
+            public void handle(Event event) {}
         };
 
         this.select.setOnMouseClicked(selectListener);
@@ -114,8 +107,6 @@ public class Controller
         this.colorpicker.setOnAction(colorListener);
         this.delete.setOnAction(deleteListener);
         this.clone.setOnAction(cloneListener);
-
-
 
         //Ecouteur pour la création des formes
         canvas.setOnMousePressed(mouseEvent -> {
@@ -229,7 +220,7 @@ public class Controller
         });
     }
 
-    //permet de créer une ligne à la position du clique dans canvas
+    //Permet de créer une ligne à la position du clique dans canvas
     public void createLine(MouseEvent event, Color color)
     {
         lineDrawn = new Line(event.getX(), event.getY(), event.getX(), event.getY());

@@ -1,8 +1,10 @@
 package sample;
 
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.RadioButton;
@@ -13,11 +15,13 @@ import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
+import javafx.scene.transform.Scale;
 
 import java.util.ArrayList;
 
 public class Controller
 {
+    //Elements du FXML
     @FXML
     private RadioButton select;
     @FXML
@@ -34,7 +38,7 @@ public class Controller
     private Button clone;
     @FXML
     private Pane canvas;
-
+    //Listeners
     private EventHandler selectListener;
     private EventHandler ellipseListener;
     private EventHandler rectangleListener;
@@ -43,12 +47,15 @@ public class Controller
     private EventHandler deleteListener;
     private EventHandler cloneListener;
 
-    private String shape = "";
+    private String currentShape = "";
     private Color color = Color.valueOf("#13e1dd");
     private Line lineDrawn;
     private Rectangle rectangleDrawn;
     private Ellipse ellipseDrawn;
+    private Shape shape = new Shape() {};
+    //position initiale des cliques
     private double x, y;
+    //liste contenant toutes les formes
     private ArrayList<Shape> shapesList;
 
     @FXML
@@ -57,25 +64,25 @@ public class Controller
         selectListener = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                shape = "select";
+                currentShape = "select";
             }
         };
         rectangleListener = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                shape = "rectangle";
+                currentShape = "rectangle";
             }
         };
         ellipseListener = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                shape = "ellipse";
+                currentShape = "ellipse";
             }
         };
         lineListener = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                shape = "line";
+                currentShape = "line";
             }
         };
         colorListener = new EventHandler() {
@@ -105,16 +112,11 @@ public class Controller
         this.delete.setOnAction(deleteListener);
         this.clone.setOnAction(cloneListener);
 
+
         canvas.setOnMousePressed(mouseEvent -> {
             x = mouseEvent.getX();
             y = mouseEvent.getY();
-            switch (shape) {
-                case "select":
-                    for(Shape s : shapesList)
-                    {
-                        //if on est sur une surface
-                    }
-                    break;
+            switch (currentShape) {
                 case "ellipse":
                     createEllipse(mouseEvent, color);
                     break;
@@ -128,54 +130,108 @@ public class Controller
         });
 
         canvas.setOnMouseDragged(e -> {
-            switch (shape) {
-                case "select":
-
-                    break;
+            switch (currentShape) {
                 case "ellipse":
                     ellipseDrawn.setRadiusX(Math.abs(e.getX()-x));
                     ellipseDrawn.setRadiusY(Math.abs(e.getY()-y));
-                    shapesList.add(ellipseDrawn);
+                    shape = ellipseDrawn;
                     break;
                 case "rectangle":
                     rectangleDrawn.setHeight(Math.abs(e.getX()-x));
                     rectangleDrawn.setWidth(Math.abs(e.getY()-y));
-                    shapesList.add(rectangleDrawn);
+                    shape = rectangleDrawn;
                     break;
                 case "line":
                     lineDrawn.setEndX(e.getX());
                     lineDrawn.setEndY(e.getY());
-                    shapesList.add(lineDrawn);
+                    shape = lineDrawn;
                     break;
             }
         });
     }
 
+    //permet de créer un rectangle à la position du clique dans canvas
+    //ajoute un écouteur pour pouvoir le sélectionner
     public void createRectangle(MouseEvent event, Color color)
     {
         rectangleDrawn = new Rectangle(event.getX(), event.getY(), 0,0);
-        rectangleDrawn.setStroke(color);
+        rectangleDrawn.setStroke(Color.BLACK);
         rectangleDrawn.setFill(color);
+        selectRect(rectangleDrawn);
         canvas.getChildren().add(rectangleDrawn);
     }
 
+    //Permet de mettre en surbrillance (agrandissement) un rectangle lorsqu'on clique dessus
+    //Problème : on peut sélectionner plusieurs formes en même temps
+    public void selectRect(Rectangle rect){
+        double scale;
+
+        if(rect.getScaleX() == 1) scale = 1.3;
+        else scale = 1;
+
+        rect.setOnMouseClicked(mouseEvent -> {
+            if(currentShape == "select")
+            {
+                //Permet de sélectionner seulement une forme à la fois
+                //Il y a un bug quand resélectionne une forme qui a été désélectionnée de cette façon
+                for(Node s : canvas.getChildren())
+                {
+                    if(s.getScaleX() == 1.3 && scale == 1.3)
+                    {
+                        s.setScaleX(1);
+                        s.setScaleY(1);
+                    }
+                }
+                rect.setScaleX(scale);
+                rect.setScaleY(scale);
+                selectRect(rect);
+            }
+        });
+    }
+
+    //Permet de créer une ellipse à la position du clique dans canvas
+    //Ajoute un écouteur pour pouvoir le sélectionner
     public void createEllipse(MouseEvent event, Color color)
     {
         ellipseDrawn = new Ellipse(event.getX(), event.getY(), 0, 0);
-        ellipseDrawn.setStroke(color);
+        ellipseDrawn.setStroke(Color.BLACK);
         ellipseDrawn.setFill(color);
+        selectElli(ellipseDrawn);
         canvas.getChildren().add(ellipseDrawn);
     }
 
+    //Permet de mettre en surbrillance (agrandissement) une ellipse lorsqu'on clique dessus
+    //Problème : on peut sélectionner plusieurs formes en même temps
+    public void selectElli(Ellipse elli){
+        double scale;
+        if(elli.getScaleX() == 1) scale = 1.3;
+        else scale = 1;
+
+        elli.setOnMouseClicked(mouseEvent -> {
+            if(currentShape == "select")
+            {
+                //Permet de sélectionner seulement une forme à la fois
+                //Il y a un bug quand resélectionne une forme qui a été désélectionnée de cette façon
+                for(Node s : canvas.getChildren())
+                {
+                    if(s.getScaleX() == 1.3 && scale == 1.3)
+                    {
+                        s.setScaleX(1);
+                        s.setScaleY(1);
+                    }
+                }
+                elli.setScaleX(scale);
+                elli.setScaleY(scale);
+                selectElli(elli);
+            }
+        });
+    }
+
+    //permet de créer une ligne à la position du clique dans canvas
     public void createLine(MouseEvent event, Color color)
     {
         lineDrawn = new Line(event.getX(), event.getY(), event.getX(), event.getY());
         lineDrawn.setStroke(color);
         canvas.getChildren().add(lineDrawn);
-    }
-
-    public void clickShape(Shape s,MouseEvent event){
-        s.setTranslateX(event.getX());
-        s.setTranslateY(event.getY());
     }
 }

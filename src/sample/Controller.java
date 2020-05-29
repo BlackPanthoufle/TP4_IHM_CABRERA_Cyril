@@ -53,8 +53,9 @@ public class Controller
     private Line lineDrawn;
     private Rectangle rectangleDrawn;
     private Ellipse ellipseDrawn;
-    private Shape selection;
-    //position initiale des cliques
+    //Forme sélectionnée et clone
+    private Shape selection, cloneSelection;
+    //Position initiale des cliques
     private double x, y;
 
     @FXML
@@ -100,7 +101,9 @@ public class Controller
         cloneListener = new EventHandler() {
             @Override
             public void handle(Event event) {
-                System.out.println("clone");
+                cloneSelection = selection;
+                cloneSelection.setTranslateX(25);
+                cloneSelection.setTranslateY(25);
             }
         };
 
@@ -161,16 +164,11 @@ public class Controller
     }
 
     //Permet de mettre en surbrillance (agrandissement) un rectangle lorsqu'on clique dessus
-    //Problème : on peut sélectionner plusieurs formes en même temps
     public void selectRect(Rectangle rect)
     {
         double scale;
 
-        if(rect.getScaleX() == 1)
-        {
-            scale = 1.3;
-            selection = rect;
-        }
+        if(rect.getScaleX() == 1) scale = 1.3;
         else scale = 1;
 
         rect.setOnMouseClicked(mouseEvent -> {
@@ -179,7 +177,12 @@ public class Controller
                 //Si la forme est sélectionnée
                 if(scale == 1.3)
                 {
+                    selection = rect;
                     uniqueSelection();
+                    rect.setOnMouseDragged(mouseEvent1 -> {
+                        rect.setX(mouseEvent1.getX());
+                        rect.setY(mouseEvent1.getY());
+                    });
                 }
                 rect.setScaleX(scale);
                 rect.setScaleY(scale);
@@ -200,15 +203,10 @@ public class Controller
     }
 
     //Permet de mettre en surbrillance (agrandissement) une ellipse lorsqu'on clique dessus
-    //Problème : on peut sélectionner plusieurs formes en même temps
     public void selectElli(Ellipse elli)
     {
         double scale;
-        if(elli.getScaleX() == 1)
-        {
-            scale = 1.3;
-            selection = elli;
-        }
+        if(elli.getScaleX() == 1) scale = 1.3;
         else scale = 1;
 
         elli.setOnMouseClicked(mouseEvent -> {
@@ -217,7 +215,12 @@ public class Controller
                 //Si la forme est sélectionnée
                 if(scale == 1.3)
                 {
+                    selection = elli;
                     uniqueSelection();
+                    elli.setOnMouseDragged(mouseEvent1 -> {
+                        elli.setCenterX(mouseEvent1.getX());
+                        elli.setCenterY(mouseEvent1.getY());
+                    });
                 }
                 elli.setScaleX(scale);
                 elli.setScaleY(scale);
@@ -235,16 +238,14 @@ public class Controller
     }
 
     //Désélectionne une autre forme qui serait sélectionnée
-    //Il y a un bug quand resélectionne une forme qui a été désélectionnée de cette façon
+    //Il y a un bug quand on resélectionne une forme qui a été désélectionnée de cette façon car le scale est restée à 1.3
+    //Il faut cliquer 2 fois
     public void uniqueSelection()
     {
         for(Node s : canvas.getChildren())
         {
-            if(s.getScaleX() == 1.3)
-            {
-                s.setScaleX(1);
-                s.setScaleY(1);
-            }
+            s.setScaleX(1);
+            s.setScaleY(1);
         }
     }
 }
